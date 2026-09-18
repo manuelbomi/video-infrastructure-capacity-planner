@@ -1,0 +1,21 @@
+# Example scenario: a small single-site deployment.
+#
+# 20 cameras at one facility (e.g. a warehouse or a small retail location),
+# on a modest 200 Mbps WAN uplink shared with normal business traffic.
+
+name: "Small single-site deployment (20 cameras)"
+
+camera_count: 20
+resolution: "1080p"      # 1920x1080
+fps: 15
+codec: "h264"
+quality_profile: "medium"
+
+retention_days: 14
+
+concurrent_ai_streams: 5
+ai_model: "generic_object_detection"
+target_ai_fps: 15
+
+available_wan_mbps: 200
+latency_sensitive: false

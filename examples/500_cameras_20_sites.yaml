@@ -1,0 +1,38 @@
+# Example scenario: a mid-size multi-site rollout.
+#
+# 500 cameras spread across 20 facilities (25 cameras/site on average),
+# all backhauling to a shared WAN uplink with 500 Mbps of available
+# capacity. This is a common "design an architecture for N cameras across M
+# facilities" style discovery-call scenario.
+#
+# All camera-related and AI-related numbers below are example inputs for
+# this fictional scenario -- replace with real site-survey data before
+# using this for an actual design or quote.
+
+name: "500 cameras across 20 facilities"
+
+camera_count: 500
+resolution: "1080p"      # 1920x1080
+fps: 15
+codec: "h265"
+quality_profile: "medium"
+
+retention_days: 30
+
+concurrent_ai_streams: 100
+ai_model: "person_detection_yolov8m"
+target_ai_fps: 10
+
+available_wan_mbps: 500
+latency_sensitive: false
+
+# Optional what-if variants shown in the comparison chart/table of the
+# generated report, to illustrate how sensitive the plan is to a couple of
+# common trade-offs a customer will usually ask about.
+variants:
+  - name: "Same scenario, H.264 instead of H.265"
+    overrides:
+      codec: "h264"
+  - name: "Same scenario, 60-day retention"
+    overrides:
+      retention_days: 60

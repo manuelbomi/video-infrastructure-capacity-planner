@@ -1,0 +1,10 @@
+{
+  "name": "500 cameras across 20 facilities",
+  "camera_count": 500,
+  "per_camera_bitrate_mbps": 1.5552,
+  "total_bandwidth_mbps": 777.6,
+  "storage_tb": 251.9424,
+  "retention_days": 30,
+  "gpu_count": 5,
+  "recommended_architecture": "edge"
+}

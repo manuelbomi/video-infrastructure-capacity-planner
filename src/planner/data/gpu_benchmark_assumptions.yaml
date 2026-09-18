@@ -1,0 +1,30 @@
+# GPU throughput assumptions used by estimate_gpu_count().
+#
+# IMPORTANT: These numbers are ILLUSTRATIVE EXAMPLES only. They are rough,
+# order-of-magnitude planning assumptions loosely inspired by publicly
+# discussed inference throughput for small/medium computer-vision models on a
+# single mid-range inference GPU. They are NOT vendor-verified benchmarks.
+#
+# Before quoting a customer, replace these numbers with real throughput
+# measurements for the *exact* model, precision (fp16/int8/TensorRT, etc.),
+# input resolution, and GPU SKU that will actually be deployed.
+#
+# reference_fps:
+#   The inference frame rate at which the "streams_per_gpu" figures below
+#   were assumed. estimate_gpu_count() scales throughput linearly with the
+#   ratio of reference_fps to the requested target_fps, because roughly
+#   halving the required inference frame rate roughly doubles how many
+#   camera streams a single GPU can keep up with (a simplifying assumption --
+#   real scaling is rarely perfectly linear once batching, memory bandwidth,
+#   and model warm-up overhead are taken into account).
+reference_fps: 30
+
+# streams_per_gpu:
+#   Example number of concurrent video streams a single reference inference
+#   GPU is assumed able to process at `reference_fps` for the given model.
+streams_per_gpu:
+  person_detection_yolov8n: 16   # small/fast detector, illustrative example
+  person_detection_yolov8m: 8    # medium detector, illustrative example
+  generic_object_detection: 12   # illustrative example, generic COCO-style detector
+  face_recognition: 6            # detection + embedding pipeline, illustrative example
+  license_plate_recognition: 10  # illustrative example, ANPR-style pipeline

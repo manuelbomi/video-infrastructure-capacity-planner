@@ -1,0 +1,10 @@
+{
+  "name": "Small single-site deployment (20 cameras)",
+  "camera_count": 20,
+  "per_camera_bitrate_mbps": 3.1104,
+  "total_bandwidth_mbps": 62.208,
+  "storage_tb": 9.4058496,
+  "retention_days": 14,
+  "gpu_count": 1,
+  "recommended_architecture": "cloud"
+}
