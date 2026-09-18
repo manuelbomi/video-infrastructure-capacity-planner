@@ -18,3 +18,8 @@ report.html
 .idea/
 .vscode/
 *.log
+
+# Frontend (frontend/ -- Vite React-TS app)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

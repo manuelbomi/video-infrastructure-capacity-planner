@@ -17,12 +17,25 @@ persistence, and no input sanitization beyond basic type coercion.
 from __future__ import annotations
 
 from fastapi import FastAPI, Form
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
 
 from .calculator import RESOLUTION_PRESETS, run_scenario
 from .report import render_report_html
 
 app = FastAPI(title="Video Infrastructure Capacity Planner")
+
+# Permissive CORS so the standalone React/Vite dev server (a different
+# origin, e.g. http://localhost:5173) can call the JSON API below during
+# local development. This process has no auth/session state, so a permissive
+# CORS policy does not expose anything sensitive -- see the module docstring.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 _FORM_HTML = """
 <!DOCTYPE html>
@@ -149,3 +162,61 @@ def compute_plan(
     }
     result = run_scenario(config)
     return render_report_html([result])
+
+
+# ---------------------------------------------------------------------------
+# JSON API (additive) -- for the React/TypeScript planner UI in frontend/.
+#
+# This endpoint accepts the exact same scenario inputs as the HTML form/CLI
+# and returns the computed numbers as JSON instead of a rendered HTML report,
+# by calling the same `run_scenario()` pipeline used everywhere else in this
+# project. It does not reimplement any of the bandwidth/storage/GPU math, so
+# results stay numerically identical to the CLI, the HTML report, and the
+# existing test suite.
+# ---------------------------------------------------------------------------
+
+
+class PlanRequest(BaseModel):
+    """Scenario inputs for POST /api/plan. Mirrors the fields run_scenario() reads."""
+
+    name: str = "Discovery-call scenario"
+    camera_count: int = Field(..., gt=0)
+    resolution: str = "1080p"
+    fps: float = Field(..., gt=0)
+    codec: str = "h265"
+    quality_profile: str = "medium"
+    retention_days: float = Field(..., ge=0)
+    concurrent_ai_streams: int = Field(0, ge=0)
+    ai_model: str = "generic_object_detection"
+    target_ai_fps: float = 15
+    available_wan_mbps: float = Field(..., gt=0)
+    latency_sensitive: bool = False
+
+
+class PlanResponse(BaseModel):
+    """Computed output for POST /api/plan. Mirrors ScenarioResult.to_dict()."""
+
+    name: str
+    camera_count: int
+    per_camera_bitrate_mbps: float
+    total_bandwidth_mbps: float
+    storage_tb: float
+    retention_days: float
+    gpu_count: int
+    recommended_architecture: str
+
+
+@app.post("/api/plan", response_model=PlanResponse)
+def api_compute_plan(request: PlanRequest) -> PlanResponse:
+    """Compute a capacity plan and return it as JSON (for the React UI)."""
+    result = run_scenario(request.model_dump())
+    return PlanResponse(
+        name=result.name,
+        camera_count=result.camera_count,
+        per_camera_bitrate_mbps=result.per_camera_bitrate_mbps,
+        total_bandwidth_mbps=result.total_bandwidth_mbps,
+        storage_tb=result.storage_tb,
+        retention_days=result.retention_days,
+        gpu_count=result.gpu_count,
+        recommended_architecture=result.recommended_architecture,
+    )

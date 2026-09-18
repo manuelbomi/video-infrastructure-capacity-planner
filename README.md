@@ -209,6 +209,45 @@ docker run --rm -p 8000:8000 video-infra-capacity-planner \
   uvicorn planner.webform:app --host 0.0.0.0 --port 8000
 ```
 
+## Interactive Planner UI
+
+![Screenshot of the React planner UI showing the 500-camera/20-facility scenario, with computed bandwidth, storage, GPU count, an "edge" architecture recommendation, and a bar-chart comparison](docs/screenshots/planner-ui.png)
+
+For a more polished, customer-facing sizing experience than the plain HTML
+form, `frontend/` is a React + TypeScript (Vite) single-page app. It presents
+the same scenario inputs as the CLI/HTML form, calls a new JSON API endpoint
+(`POST /api/plan`, added to `src/planner/webform.py`) to compute the plan, and
+renders the results as metric cards, an architecture recommendation banner,
+and a `recharts` bar-chart comparison of bandwidth, storage, and GPU count.
+The form is pre-populated with the real `examples/500_cameras_20_sites.yaml`
+values, so the first render already shows the worked example from this README
+(777.6 Mbps, 251.94 TB, 5 GPUs, "edge").
+
+`POST /api/plan` reuses the exact same `run_scenario()` calculation pipeline
+as the CLI and the HTML report — it does not reimplement any formulas — so
+its numbers are always numerically consistent with the rest of this project.
+It is purely additive: the existing CLI, `report.py`, and the HTML
+`GET /` + `POST /plan` routes in `webform.py` are unchanged.
+
+### Run it locally
+
+```bash
+# Terminal 1: start the backend (serves the JSON API the UI calls)
+pip install -r requirements.txt
+pip install -e .
+uvicorn planner.webform:app --reload
+
+# Terminal 2: start the frontend dev server
+cd frontend
+npm install
+npm run dev
+```
+
+Then open the Vite dev server URL (typically <http://localhost:5173/>) in a
+browser. To build a static production bundle instead: `cd frontend && npm run
+build` (outputs to `frontend/dist/`); `npm run preview` serves that build
+locally.
+
 ## Project structure
 
 ```
@@ -220,12 +259,22 @@ video-infrastructure-capacity-planner/
 ├── requirements.txt
 ├── .github/
 │   └── workflows/
-│       └── ci.yml
+│       └── ci.yml               # Python job + frontend (Vite/TS) job
+├── docs/
+│   └── screenshots/
+│       └── planner-ui.png
 ├── examples/
 │   ├── 500_cameras_20_sites.yaml
 │   ├── 500_cameras_20_sites_expected_output.json
 │   ├── small_single_site.yaml
 │   └── small_single_site_expected_output.json
+├── frontend/                     # React + TypeScript (Vite) planner UI
+│   ├── index.html
+│   ├── package.json
+│   └── src/
+│       ├── App.tsx                # form + results panel + recharts comparison
+│       ├── types.ts               # TS types mirroring PlanRequest/PlanResponse
+│       └── main.tsx
 ├── src/
 │   └── planner/
 │       ├── __init__.py
@@ -233,7 +282,7 @@ video-infrastructure-capacity-planner/
 │       ├── calculator.py       # core formulas
 │       ├── cli.py               # `python -m planner plan ...`
 │       ├── report.py            # HTML report + chart generation
-│       ├── webform.py           # optional FastAPI interactive form
+│       ├── webform.py           # FastAPI interactive form + POST /api/plan JSON API
 │       ├── data/
 │       │   └── gpu_benchmark_assumptions.yaml
 │       └── templates/
@@ -241,7 +290,8 @@ video-infrastructure-capacity-planner/
 └── tests/
     ├── test_calculator.py
     ├── test_examples.py
-    └── test_report.py
+    ├── test_report.py
+    └── test_webform_api.py       # tests for POST /api/plan
 ```
 
 ## Testing
@@ -263,8 +313,15 @@ The test suite covers:
 - A test that the generated HTML report actually contains the key computed
   figures (bandwidth, storage, GPU count, and the recommendation) and a valid
   embedded chart image.
+- Tests for the `POST /api/plan` JSON API (used by the React frontend in
+  `frontend/`), checking its response against the same hand-verified numbers
+  used above, plus request-validation error cases.
 
-All 33 tests pass as of this writing (`33 passed`).
+All 37 tests pass as of this writing (`37 passed`).
+
+The `frontend/` app has its own build-time checks (no separate test runner):
+`cd frontend && npm install && npx tsc --noEmit && npm run build` must
+complete with zero TypeScript errors.
 
 ## Limitations & production hardening notes
 
