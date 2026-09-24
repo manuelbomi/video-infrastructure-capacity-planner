@@ -371,6 +371,7 @@ NLP, Agentic-AI and LLM applications as well as deploying scalable solutions (ap
 
 I can be reached through: manuelbomi@yahoo.com
 
+Website: https://www.emmanueloyekanlu.com/
 Publications:  https://scholar.google.com/citations?user=S-jTMfkAAAAJ&hl=en
 LinkedIn:  https://www.linkedin.com/in/emmanuel-oyekanlu-6ba98616
 Github:  https://github.com/manuelbomi
